@@ -16,7 +16,7 @@ services:
       - key: DEBUG
         value: false
       - key: CORS_ORIGINS
-        value: https://YOUR_DOMAIN.com
+        value: https://bluecircle.tech
       - key: JWT_SECRET
         generateValue: true
       - key: PYTHON_VERSION
