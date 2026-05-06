@@ -3,6 +3,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.database import engine, Base
@@ -84,13 +86,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/")
 async def root():
-    return {
-        "name": settings.app_name,
-        "version": settings.app_version,
-        "environment": settings.environment,
-        "docs": "/docs",
-    }
-
+    return FileResponse("static/index.html")
 
 @app.get("/health")
 async def health():
@@ -101,3 +97,8 @@ async def health():
         "version": settings.app_version,
         "uptime": check_uptime(),
     }
+
+# ── Static Files (frontend, MUST be last) ──
+app.mount("/js", StaticFiles(directory="static/js"), name="js")
+app.mount("/css", StaticFiles(directory="static/css"), name="css")
+app.mount("/img", StaticFiles(directory="static/img"), name="img")
