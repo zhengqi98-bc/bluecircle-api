@@ -101,3 +101,10 @@ async def health():
         "version": settings.app_version,
         "uptime": check_uptime(),
     }
+
+@app.get("/_migrate")
+async def run_migration():
+    """One-time migration: create all tables."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    return {"status": "migrated"}
