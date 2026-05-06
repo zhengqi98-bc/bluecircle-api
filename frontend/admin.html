@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blue Circle Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e17;color:#e0e0e0;min-height:100vh}
+.header{background:linear-gradient(135deg,#0d1b2a,#1b2838);padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(28,167,168,.2)}
+.header h1{font-size:1.3rem;color:#1CA7A8}
+.header .user{font-size:.85rem;color:rgba(255,255,255,.6)}
+.layout{display:flex;min-height:calc(100vh - 60px)}
+.sidebar{width:200px;background:#0d1520;padding:1rem;border-right:1px solid rgba(255,255,255,.05)}
+.sidebar a{display:block;padding:.6rem .8rem;color:rgba(255,255,255,.55);text-decoration:none;border-radius:6px;margin-bottom:4px;font-size:.85rem;cursor:pointer;transition:all .2s}
+.sidebar a:hover,.sidebar a.active{background:rgba(28,167,168,.15);color:#1CA7A8}
+.main{flex:1;padding:1.5rem;overflow-y:auto}
+.card{background:#111827;border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:1.2rem;margin-bottom:1rem}
+.card h2{font-size:1rem;color:#fff;margin-bottom:1rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.8rem}
+.stat{background:rgba(28,167,168,.08);border:1px solid rgba(28,167,168,.15);border-radius:8px;padding:1rem;text-align:center}
+.stat .val{font-size:1.8rem;font-weight:700;color:#1CA7A8}.stat .lbl{font-size:.75rem;color:rgba(255,255,255,.4);margin-top:4px}
+.stat.warn .val{color:#f59e0b}.stat.danger .val{color:#ef4444}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;padding:.6rem .8rem;color:rgba(255,255,255,.4);font-weight:600;border-bottom:1px solid rgba(255,255,255,.08)}
+td{padding:.6rem .8rem;border-bottom:1px solid rgba(255,255,255,.04)}tr:hover{background:rgba(28,167,168,.04)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600}
+.badge-teal{background:rgba(28,167,168,.2);color:#1CA7A8}.badge-amber{background:rgba(245,158,11,.2);color:#f59e0b}.badge-red{background:rgba(239,68,68,.2);color:#ef4444}.badge-green{background:rgba(34,197,94,.2);color:#22c55e}.badge-gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.5)}
+.btn{padding:.4rem .9rem;border-radius:6px;border:none;font-size:.8rem;cursor:pointer;font-weight:600;transition:all .2s}
+.btn-teal{background:#1CA7A8;color:#fff}.btn-teal:hover{background:#179697}
+.btn-red{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}.btn-red:hover{background:rgba(239,68,68,.25)}
+.btn-amber{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.login-box{max-width:400px;margin:100px auto;background:#111827;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:2rem}
+.login-box h1{font-size:1.5rem;color:#1CA7A8;text-align:center;margin-bottom:1.5rem}
+.login-box input{width:100%;padding:.7rem;background:#0a0e17;border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;margin-bottom:.8rem;font-size:.9rem}
+.login-box input:focus{outline:none;border-color:#1CA7A8}
+.login-box button{width:100%;padding:.7rem;background:#1CA7A8;color:#fff;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer}
+.login-box .error{color:#ef4444;font-size:.8rem;margin-bottom:.8rem;display:none}
+.section{display:none}.section.active{display:block}
+.form-group{margin-bottom:.8rem}.form-group label{display:block;font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:4px}
+.form-group select,.form-group input{width:100%;padding:.5rem;background:#0a0e17;border:1px solid rgba(255,255,255,.1);border-radius:6px;color:#fff;font-size:.85rem}
+.form-group select:focus,.form-group input:focus{outline:none;border-color:#1CA7A8}
+.form-row{display:flex;gap:.8rem}.form-row .form-group{flex:1}
+.toast{position:fixed;top:1rem;right:1rem;padding:.8rem 1.2rem;border-radius:8px;font-size:.85rem;z-index:9999;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}.toast-success{background:#065f46;color:#6ee7b7}.toast-error{background:#7f1d1d;color:#fca5a5}
+</style>
+</head>
+<body>
+<div class="header" id="header" style="display:none"><h1>🐢 Blue Circle Admin</h1><div class="user"><span id="admin-email"></span> · <a href="#" onclick="logout()" style="color:rgba(255,255,255,.3)">登出</a></div></div>
+<div class="login-box" id="login-box"><h1>🐢 Blue Circle<br>管理后台</h1><input type="email" id="login-email" placeholder="邮箱"><input type="password" id="login-pass" placeholder="密码" onkeydown="if(event.key==='Enter')doLogin()"><div class="error" id="login-error">邮箱或密码错误</div><button onclick="doLogin()">登 录</button></div>
+<div class="layout" id="app-layout" style="display:none">
+<div class="sidebar">
+<a class="active" onclick="showSection('dashboard')">📊 仪表盘</a>
+<a onclick="showSection('users')">👥 用户管理</a>
+<a onclick="showSection('trials')">📝 试用管理</a>
+<a onclick="showSection('alerts')">🚨 预警管理</a>
+<a onclick="showSection('reports')">📄 报告中心</a>
+<a onclick="showSection('hardware')">📡 设备管理</a>
+</div>
+<div class="main">
+<div class="section active" id="sec-dashboard"><div class="card"><h2>📊 系统概览</h2><div class="stats-grid" id="stats-grid"></div></div><div class="card"><h2>🫀 系统健康</h2><div class="stats-grid" id="health-grid"><div class="stat"><div class="val">—</div><div class="lbl">加载中...</div></div></div></div></div>
+<div class="section" id="sec-users"><div class="card"><h2>👥 用户列表</h2><table><thead><tr><th>邮箱</th><th>机构</th><th>角色</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="users-tbody"></tbody></table></div></div>
+<div class="section" id="sec-trials"><div class="card"><h2>📝 试用申请</h2><table><thead><tr><th>机构</th><th>联系人</th><th>邮箱</th><th>物种</th><th>数量</th><th>时长</th><th>状态</th><th>操作</th></tr></thead><tbody id="trials-tbody"></tbody></table></div></div>
+<div class="section" id="sec-alerts"><div class="card"><h2>🚨 预警列表</h2><table><thead><tr><th>海龟</th><th>类型</th><th>级别</th><th>标题</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="alerts-tbody"></tbody></table></div></div>
+<div class="section" id="sec-reports">
+<div class="card"><h2>📄 生成报告</h2>
+<div class="form-row"><div class="form-group"><label>标题</label><input type="text" id="rpt-title" placeholder="报告标题"></div><div class="form-group"><label>类型</label><select id="rpt-type"><option value="fleet_overview">舰队总览</option><option value="turtle_activity">海龟活动</option><option value="alert_summary">预警统计</option><option value="monthly_summary">月度摘要</option></select></div></div>
+<div class="form-row"><div class="form-group"><label>海龟ID</label><input type="text" id="rpt-turtle" placeholder="BC-XS-2401"></div><div class="form-group"><label>起始</label><input type="date" id="rpt-from"></div><div class="form-group"><label>结束</label><input type="date" id="rpt-to"></div></div>
+<button class="btn btn-teal" onclick="genReport()" style="margin-top:.5rem">⚡ 生成</button></div>
+<div class="card"><h2>📋 报告列表</h2><table><thead><tr><th>标题</th><th>类型</th><th>海龟</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="reports-tbody"></tbody></table></div></div>
+<div class="section" id="sec-hardware">
+<div class="card"><h2>📡 设备申请</h2>
+<div style="margin-bottom:1rem"><button class="btn btn-teal" onclick="loadHardware('')">全部</button> <button class="btn btn-amber" onclick="loadHardware('pending')">待审批</button> <button class="btn btn-teal" onclick="loadHardware('approved')">已批准</button> <button class="btn btn-teal" onclick="loadHardware('shipped')">已发货</button></div>
+<table><thead><tr><th>申请人</th><th>机构</th><th>项目</th><th>设备</th><th>数量</th><th>状态</th><th>时间</th><th>操作</th></tr></thead><tbody id="hardware-tbody"></tbody></table></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+var API='/api/v1';var TOKEN=localStorage.getItem('bc_admin_token')||'';
+function api(method,path,data){var h={'Content-Type':'application/json'};if(TOKEN)h['Authorization']='Bearer '+TOKEN;var o={method:method,headers:h};if(data)o.body=JSON.stringify(data);return fetch(API+path,o).then(function(r){if(r.status===204)return{status:204,body:{}};return r.json().then(function(b){return{status:r.status,body:b}})})}
+function toast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='error'?'toast-error':'toast-success')+' show';setTimeout(function(){t.className='toast'},2500)}
+async function doLogin(){var e=document.getElementById('login-email').value;var p=document.getElementById('login-pass').value;var r=await api('POST','/auth/login',{email:e,password:p});if(r.status===200){TOKEN=r.body.access_token;localStorage.setItem('bc_admin_token',TOKEN);document.getElementById('login-box').style.display='none';document.getElementById('header').style.display='flex';document.getElementById('app-layout').style.display='flex';document.getElementById('admin-email').textContent=e;loadDashboard()}else{document.getElementById('login-error').style.display='block'}}
+function logout(){TOKEN='';localStorage.removeItem('bc_admin_token');location.reload()}
+function showSection(name){document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active')});document.getElementById('sec-'+name).classList.add('active');document.querySelectorAll('.sidebar a').forEach(function(a){a.classList.remove('active')});event.target.classList.add('active');if(name==='dashboard')loadDashboard();if(name==='users')loadUsers();if(name==='trials')loadTrials();if(name==='alerts')loadAlerts();if(name==='reports')loadReports();if(name==='hardware')loadHardware('')}
+
+async function loadDashboard(){var r=await api('GET','/admin/stats');if(r.status!==200){toast('无管理员权限','error');return}var s=r.body,items=[{v:s.total_turtles,l:'追踪海龟'},{v:s.active_turtles,l:'在线'},{v:s.total_track_points,l:'轨迹点'},{v:s.total_datasets,l:'数据集'},{v:s.total_users,l:'用户'},{v:s.open_alerts,l:'活跃预警',cls:'warn'},{v:s.pending_trials,l:'待审批',cls:'warn'}],h='';for(var i=0;i<items.length;i++)h+='<div class="stat '+(items[i].cls||'')+'"><div class="val">'+items[i].v+'</div><div class="lbl">'+items[i].l+'</div></div>';document.getElementById('stats-grid').innerHTML=h;loadHealth()}
+async function loadUsers(){var r=await api('GET','/admin/users?limit=100');if(r.status===403){toast('无权限','error');return}var users=Array.isArray(r.body)?r.body:[],h='';for(var i=0;i<users.length;i++){var u=users[i],rb=u.role==='admin'?'badge-teal':u.role==='researcher'?'badge-amber':'badge-gray';h+='<tr><td>'+u.email+'</td><td>'+(u.institution||'-')+'</td><td><span class="badge '+rb+'">'+u.role+'</span></td><td>'+(u.is_active?'<span class="badge badge-green">活跃</span>':'<span class="badge badge-red">禁用</span>')+'</td><td>'+(u.created_at||'').substring(0,10)+'</td><td><button class="btn btn-teal" onclick="setRole(\''+u.id+'\',\'researcher\')" style="margin-right:4px">研究员</button><button class="btn btn-red" onclick="setRole(\''+u.id+'\',\'user\')">降级</button></td></tr>'}document.getElementById('users-tbody').innerHTML=h||'<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.3)">暂无用户</td></tr>'}
+async function setRole(uid,role){var r=await api('PATCH','/admin/users/'+uid+'/role?role='+role);if(r.status===200){toast('角色已更新','success');loadUsers()}else toast('失败','error')}
+
+async function loadTrials(){var r=await api('GET','/admin/trials?status=pending&limit=100');if(r.status===403){toast('无权限','error');return}var trials=Array.isArray(r.body)?r.body:[],h='';for(var i=0;i<trials.length;i++){var t=trials[i];h+='<tr><td>'+t.institution+'</td><td>'+(t.contact_name||'-')+'</td><td>'+t.contact_email+'</td><td>'+(t.target_species||'-')+'</td><td>'+t.quantity+'</td><td>'+t.duration_months+'</td><td><span class="badge badge-amber">'+t.status+'</span></td><td><button class="btn btn-teal" onclick="reviewTrial('+t.id+',\'approved\')">批准</button> <button class="btn btn-red" onclick="reviewTrial('+t.id+',\'rejected\')">拒绝</button></td></tr>'}document.getElementById('trials-tbody').innerHTML=h||'<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,.3)">暂无待审批</td></tr>'}
+async function reviewTrial(tid,status){var n=prompt('备注（可选）:');var r=await api('PATCH','/admin/trials/'+tid+'/review',{status:status,reviewer_notes:n||null});if(r.status===200){toast('已'+(status==='approved'?'批准':'拒绝'),'success');loadTrials()}else toast('失败','error')}
+
+async function loadAlerts(){var r=await api('GET','/alerts/?limit=100'),alerts=r.body?(r.body.items||[]):[],sev={critical:'badge-red',high:'badge-red',medium:'badge-amber',low:'badge-green'},h='';for(var i=0;i<alerts.length;i++){var a=alerts[i];h+='<tr><td>'+(a.turtle_id||'-')+'</td><td>'+a.alert_type+'</td><td><span class="badge '+(sev[a.severity]||'badge-gray')+'">'+a.severity+'</span></td><td>'+a.title+'</td><td><span class="badge '+(a.status==='resolved'?'badge-green':a.status==='open'?'badge-red':'badge-amber')+'">'+a.status+'</span></td><td>'+(a.created_at||'').substring(0,16)+'</td><td><button class="btn btn-amber" onclick="resolveAlert('+a.id+')">解决</button></td></tr>'}document.getElementById('alerts-tbody').innerHTML=h||'<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,.3)">暂无预警</td></tr>'}
+async function resolveAlert(aid){var r=await api('PATCH','/alerts/'+aid,{status:'resolved'});if(r.status===200){toast('已解决','success');loadAlerts()}else toast('失败','error')}
+
+var RPT_TYPES={fleet_overview:'舰队总览',turtle_activity:'海龟活动',alert_summary:'预警统计',monthly_summary:'月度摘要'};
+async function genReport(){var title=document.getElementById('rpt-title').value||('Report_'+new Date().toISOString().substring(0,10)),type=document.getElementById('rpt-type').value,turtle=document.getElementById('rpt-turtle').value,from=document.getElementById('rpt-from').value,to=document.getElementById('rpt-to').value,data={title:title,report_type:type};if(turtle)data.turtle_id=turtle;if(from||to)data.params={};if(from)data.params.date_from=from;if(to)data.params.date_to=to;var r=await api('POST','/reports/',data);if(r.status===201){toast('已生成','success');loadReports()}else toast('失败: '+(r.body.detail||r.status),'error')}
+async function loadReports(){var r=await api('GET','/reports/?limit=100'),items=r.body?(r.body.items||[]):[],h='';for(var i=0;i<items.length;i++){var rp=items[i],sb=rp.status==='completed'?'badge-green':rp.status==='failed'?'badge-red':'badge-amber';h+='<tr><td>'+rp.title+'</td><td>'+(RPT_TYPES[rp.report_type]||rp.report_type)+'</td><td>'+(rp.turtle_id||'—')+'</td><td><span class="badge '+sb+'">'+rp.status+'</span></td><td>'+(rp.created_at||'').substring(0,16)+'</td><td><button class="btn btn-teal" onclick="window.open(\''+API+'/reports/'+rp.id+'/download\')" style="margin-right:4px">下载</button><button class="btn btn-red" onclick="delReport(\''+rp.id+'\')">删除</button></td></tr>'}document.getElementById('reports-tbody').innerHTML=h||'<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,.3)">暂无报告</td></tr>'}
+async function delReport(rid){if(!confirm('确定删除？'))return;var r=await api('DELETE','/reports/'+rid);if(r.status===204){toast('已删除','success');loadReports()}else toast('失败','error')}
+
+// ── Hardware Management ──
+var DEV_TYPES={gps_tag:'GPS标签',depth_sensor:'深度传感器',temp_sensor:'温度传感器',camera_tag:'摄像标签',satellite_tag:'卫星标签'};
+async function loadHardware(st){var url='/admin/hardware';if(st)url+='?status='+st;var r=await api('GET',url);if(r.status===403){toast('需要管理员权限','error');return}var apps=Array.isArray(r.body)?r.body:[],h='';for(var i=0;i<apps.length;i++){var a=apps[i],sb=a.status==='approved'?'badge-green':a.status==='shipped'?'badge-teal':a.status==='rejected'?'badge-red':'badge-amber',acts='';if(a.status==='pending')acts='<button class="btn btn-teal" onclick="hwReview('+a.id+',\'approved\')" style="margin-right:4px">批准</button><button class="btn btn-red" onclick="hwReview('+a.id+',\'rejected\')">拒绝</button>';else if(a.status==='approved')acts='<button class="btn btn-teal" onclick="hwShip('+a.id+')">发货</button>';else acts=a.tracking_number||'—';h+='<tr><td>'+a.applicant_name+'</td><td>'+a.institution+'</td><td>'+a.project_title.substring(0,20)+'</td><td>'+(DEV_TYPES[a.device_type]||a.device_type)+'</td><td>'+a.quantity+'</td><td><span class="badge '+sb+'">'+a.status+'</span></td><td>'+(a.created_at||'').substring(0,10)+'</td><td>'+acts+'</td></tr>'}document.getElementById('hardware-tbody').innerHTML=h||'<tr><td colspan="8" style="text-align:center;color:rgba(255,255,255,.3)">暂无申请</td></tr>'}
+async function hwReview(aid,status){var n=prompt('审批备注（可选）:');var r=await api('PATCH','/admin/hardware/'+aid+'/review',{status:status,reviewer_notes:n||null});if(r.status===200){toast('已'+(status==='approved'?'批准':'拒绝'),'success');loadHardware('')}else toast('失败: '+(r.body.detail||''),'error')}
+async function loadHealth(){var r=await api('GET','/admin/health');if(r.status!==200)return;var h=document.getElementById('health-grid'),d=r.body,db=d.database,rd=d.redis,dk=d.disk,mm=d.memory,up=d.uptime,s=function(v,l,c){return'<div class=\"stat '+c+'\"><div class=\"val\">'+v+'</div><div class=\"lbl\">'+l+'</div></div>'};h.innerHTML=s(db.status==='ok'?'✅ '+db.latency_ms+'ms':'❌','DB',db.status!=='ok'?'danger':'')+s(rd.status==='ok'?'✅ '+rd.latency_ms+'ms':rd.status==='unknown'?'⚠ N/A':'❌','Redis',rd.status!=='ok'?'warn':'')+s(dk.used_pct+'%','磁盘 '+dk.free_gb+'GB',dk.used_pct>85?'danger':dk.used_pct>70?'warn':'')+s(mm.used_pct+'%','内存 '+mm.available_mb+'MB',mm.used_pct>85?'danger':mm.used_pct>70?'warn':'')+s(up.uptime_human,'运行时间','')}
+
+async function hwShip(aid){var tn=prompt('快递单号:');if(!tn)return;var er=prompt('预计归还日期（如2027-06-01，可选）:');var r=await api('PATCH','/admin/hardware/'+aid+'/ship',{tracking_number:tn,expected_return:er||null});if(r.status===200){toast('已标记发货','success');loadHardware('')}else toast('失败','error')}
+
+if(TOKEN){api('GET','/auth/me').then(function(r){if(r.status===200){document.getElementById('login-box').style.display='none';document.getElementById('header').style.display='flex';document.getElementById('app-layout').style.display='flex';document.getElementById('admin-email').textContent=r.body.email;loadDashboard()}else{TOKEN='';localStorage.removeItem('bc_admin_token')}})}
+</script>
+</body>
+</html>
